@@ -1,23 +1,35 @@
-name: NewsPulse Daily Runner
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install requests feedparser
-      - name: Run NewsPulse Bot
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python main.py
+import os
+import requests
+import feedparser
+
+def get_human_like_article(topic_title, lang):
+    api_key = os.environ.get("GEMINI_API_KEY")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. بأسلوب بشري وتحليلي."}]}]
+    }
+    
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        return data['candidates'][0]['content']['parts'][0]['text']
+    else:
+        return f"خطأ الاتصال: {response.text}"
+
+def run_news_pulse():
+    feeds = {
+        'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
+        'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'
+    }
+    
+    for lang, url in feeds.items():
+        feed = feedparser.parse(url)
+        if feed.entries:
+            top_topic = feed.entries[0].title
+            print(f"العنوان: {top_topic}")
+            print(get_human_like_article(top_topic, lang))
+            print("-" * 20)
+
+if __name__ == "__main__":
+    run_news_pulse()
