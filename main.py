@@ -1,34 +1,28 @@
-import os
-import feedparser
-from openai import OpenAI
+name: NewsPulse Daily Runner
 
-# إعداد الربط مع OpenAI
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-def get_human_like_article(topic_title, lang):
-    prompt = f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. يجب أن يكون الأسلوب بشرياً وتحليلياً. أضف رؤية مستقبلية في النهاية."
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "system", "content": "أنت صحفي خبير."}, {"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-def run_news_pulse():
-    # استخدام RSS Feed بدلاً من pytrends لتجنب الحظر
-    feeds = {'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
-             'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'}
-    
-    for lang, url in feeds.items():
-        print(f"جاري جلب الأخبار من: {lang}")
-        feed = feedparser.parse(url)
-        # جلب أول خبر فقط
-        top_topic = feed.entries[0].title
-        
-        print(f"العنوان الرائج: {top_topic}")
-        article = get_human_like_article(top_topic, lang)
-        print(f"--- المقال بـ {lang} ---")
-        print(article)
-        print("-" * 30)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-if __name__ == "__main__":
-    run_news_pulse()
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-generativeai feedparser
+
+      - name: Run NewsPulse Bot
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python main.py
