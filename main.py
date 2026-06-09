@@ -2,7 +2,7 @@ import os
 import feedparser
 from openai import OpenAI
 
-# إعداد الربط
+# إعداد الربط مع OpenAI
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def get_human_like_article(topic_title, lang):
@@ -21,10 +21,12 @@ def run_news_pulse():
     for lang, url in feeds.items():
         print(f"جاري جلب الأخبار من: {lang}")
         feed = feedparser.parse(url)
+        # جلب أول خبر فقط
         top_topic = feed.entries[0].title
         
         print(f"العنوان الرائج: {top_topic}")
         article = get_human_like_article(top_topic, lang)
+        print(f"--- المقال بـ {lang} ---")
         print(article)
         print("-" * 30)
 
