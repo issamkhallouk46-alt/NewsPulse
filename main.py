@@ -12,17 +12,20 @@ def get_human_like_article(topic_title, lang):
     return response.text
 
 def run_news_pulse():
-    feeds = {'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
-             'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'}
+    feeds = {
+        'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
+        'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'
+    }
     
     for lang, url in feeds.items():
-        print(f"جاري جلب الأخبار من: {lang}")
+        print(f"--- جاري جلب الأخبار من: {lang} ---")
         feed = feedparser.parse(url)
-        top_topic = feed.entries[0].title
-        print(f"العنوان الرائج: {top_topic}")
-        article = get_human_like_article(top_topic, lang)
-        print(article)
-        print("-" * 30)
+        if feed.entries:
+            top_topic = feed.entries[0].title
+            print(f"العنوان الرائج: {top_topic}")
+            article = get_human_like_article(top_topic, lang)
+            print(article)
+            print("-" * 50)
 
 if __name__ == "__main__":
     run_news_pulse()
