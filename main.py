@@ -1,28 +1,28 @@
-name: NewsPulse Daily Runner
+import os
+import feedparser
+import google.generativeai as genai
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+# إعداد الربط مع Gemini
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+def get_human_like_article(topic_title, lang):
+    prompt = f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. بأسلوب بشري وتحليلي."
+    response = model.generate_content(prompt)
+    return response.text
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+def run_news_pulse():
+    feeds = {'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
+             'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'}
+    
+    for lang, url in feeds.items():
+        print(f"جاري جلب الأخبار من: {lang}")
+        feed = feedparser.parse(url)
+        top_topic = feed.entries[0].title
+        print(f"العنوان الرائج: {top_topic}")
+        article = get_human_like_article(top_topic, lang)
+        print(article)
+        print("-" * 30)
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install google-generativeai feedparser
-
-      - name: Run NewsPulse Bot
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python main.py
+if __name__ == "__main__":
+    run_news_pulse()
