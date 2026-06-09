@@ -1,47 +1,32 @@
 import os
-import time
-from pytrends.request import TrendReq
+import feedparser
 from openai import OpenAI
 
 # إعداد الربط
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-def get_human_like_article(topic, lang):
-    prompt = f"اكتب مقالاً احترافياً عن '{topic}' باللغة {lang}. يجب أن يكون الأسلوب بشرياً، تحليلياً، وجذاباً، بعيداً عن الصياغة الآلية. أضف رأياً أو رؤية مستقبلية في النهاية."
-    
+def get_human_like_article(topic_title, lang):
+    prompt = f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. يجب أن يكون الأسلوب بشرياً وتحليلياً. أضف رؤية مستقبلية في النهاية."
     response = client.chat.completions.create(
         model="gpt-4o",
-        messages=[{"role": "system", "content": "أنت صحفي خبير ومحلل تريند عالمي."},
-                  {"role": "user", "content": prompt}]
+        messages=[{"role": "system", "content": "أنت صحفي خبير."}, {"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
 
 def run_news_pulse():
-    # إعداد pytrends مع معالجة الأخطاء
-    pytrend = TrendReq(hl='en-US', tz=360)
+    # استخدام RSS Feed بدلاً من pytrends
+    feeds = {'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
+             'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'}
     
-    # استخدام رموز الدول الصحيحة المعتمدة من Google Trends
-    countries = {'MA': 'العربية', 'FR': 'الفرنسية', 'US': 'الإنجليزية'}
-    
-    for country, lang in countries.items():
-        try:
-            print(f"جاري مراقبة التريند في: {country}")
-            trends = pytrend.trending_searches(pn=country)
-            top_topic = trends[0][0]
-            
-            print(f"الموضوع الرائج هو: {top_topic}")
-            article = get_human_like_article(top_topic, lang)
-            
-            print(f"--- مقال باللغة {lang} ---")
-            print(article)
-            print("-" * 30)
-            
-            # تأخير 10 ثوانٍ بين كل عملية لضمان عدم الحظر
-            time.sleep(10)
-            
-        except Exception as e:
-            print(f"حدث خطأ أثناء معالجة {country}: {e}")
-            continue
+    for lang, url in feeds.items():
+        print(f"جاري جلب الأخبار من: {lang}")
+        feed = feedparser.parse(url)
+        top_topic = feed.entries[0].title
+        
+        print(f"العنوان الرائج: {top_topic}")
+        article = get_human_like_article(top_topic, lang)
+        print(article)
+        print("-" * 30)
 
 if __name__ == "__main__":
     run_news_pulse()
