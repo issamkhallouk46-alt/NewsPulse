@@ -1,15 +1,20 @@
 import os
+import requests
 import feedparser
-import google.generativeai as genai
 
-# إعداد الربط مع Gemini
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash')
+API_KEY = os.environ["GEMINI_API_KEY"]
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
 def get_human_like_article(topic_title, lang):
-    prompt = f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. بأسلوب بشري وتحليلي."
-    response = model.generate_content(prompt)
-    return response.text
+    payload = {
+        "contents": [{"parts": [{"text": f"اكتب مقالاً احترافياً عن الموضوع التالي: '{topic_title}'. باللغة {lang}. بأسلوب بشري وتحليلي."}]}]
+    }
+    try:
+        response = requests.post(API_URL, json=payload)
+        data = response.json()
+        return data['candidates'][0]['content']['parts'][0]['text']
+    except Exception as e:
+        return f"خطأ في الاتصال: {str(e)}"
 
 def run_news_pulse():
     feeds = {
