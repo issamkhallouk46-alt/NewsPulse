@@ -14,7 +14,7 @@ def get_human_like_article(topic_title, lang):
     return response.choices[0].message.content
 
 def run_news_pulse():
-    # استخدام RSS Feed بدلاً من pytrends
+    # استخدام RSS Feed بدلاً من pytrends لتجنب الحظر
     feeds = {'العربية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=ar&gl=MA',
              'الفرنسية': 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=fr&gl=FR'}
     
